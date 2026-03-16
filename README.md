@@ -2,7 +2,7 @@
 
 Aplicación de facturación electrónica argentina, construida como proyecto de capacitación avanzada en **SAP CAP Node.js v9**. Implementa el flujo completo de facturación AFIP (Factura A/B/C, Notas de Crédito, pagos), combinando patrones enterprise de SAP BTP con un frontend React moderno.
 
-> **Objetivo:** demostrar dominio de CAP Node.js v9  Draft Handling, Concurrency Control, Event Mesh, Job Scheduling, Unit Testing y UI5 Web Components  en un caso de uso real del mercado argentino.
+> **Objetivo:** demostrar dominio de CAP Node.js v9 — Draft Handling, Concurrency Control, Event Mesh, Job Scheduling, Autorización, Unit Testing y Frontend React — en un caso de uso real del mercado argentino.
 
 ---
 
@@ -15,7 +15,9 @@ Aplicación de facturación electrónica argentina, construida como proyecto de 
 | `@sap/cds-dk` | `^9.8` | CLI: `cds watch`, `cds deploy`, `cds compile` |
 | `@cap-js/sqlite` | `^2.2` | Base de datos SQLite in-memory (dev) |
 | `node-cron` | `^4.2` | Jobs programados (vencimientos, alertas SSE) |
-| `pdfkit` | `^0.17` | Generación de PDFs de facturas |
+| `pdfkit` | `^0.17` | Generación de PDFs profesionales de facturas |
+| `nodemailer` | `^8` | Envío de emails transaccionales reales (Mailtrap) |
+| `dotenv` | `^17` | Variables de entorno para credenciales SMTP |
 | `express` | `^4` | HTTP server base |
 
 ### Frontend (`app/invoicing-ui/`)
@@ -23,7 +25,6 @@ Aplicación de facturación electrónica argentina, construida como proyecto de 
 |---|---|---|
 | React | `^18.3` | UI library |
 | Vite | `^6.4` | Build tool y dev server |
-| `@ui5/webcomponents-react` | `^2` | Componentes SAP Fiori |
 | `@tanstack/react-query` | `^5` | Data fetching y cache |
 | `react-router-dom` | `^6` | Navegación SPA |
 | `recharts` | `^3.8` | Gráficos del dashboard |
@@ -47,19 +48,23 @@ easybill-lab/
         easybill.Clients.csv
         easybill.Products.csv
  srv/
-    services.cds            # Definición de los 5 servicios OData
-    service.cds             # AdminService (debug)
+    services.cds            # Definición de los 5 servicios OData con @restrict
+    service.cds             # AdminService (debug/seed)
     order-service.js        # Pedidos + Draft Handling + ETag
-    invoice-service.js      # Facturación electrónica + AFIP + PDF
-    payment-service.js      # Pagos parciales/totales
-    credit-note-service.js  # Notas de crédito
+    invoice-service.js      # Facturación electrónica + AFIP + PDF + validación CUIT
+    payment-service.js      # Pagos parciales/totales + email confirmación
+    credit-note-service.js  # Notas de crédito totales y parciales
     audit-service.js        # Event Mesh + auditoría
+    lib/
+        cuit.js             # Validación CUIT con dígito verificador
     external/
         AfipService.js      # CAE simulado (AFIP mock)
-        EmailService.js     # Envío de emails (mock)
-        PdfService.js       # Generación de PDFs con pdfkit
+        EmailService.js     # Emails reales via nodemailer + Mailtrap
+        PdfService.js       # PDFs A4 profesionales A/B/C diferenciados
  app/
-    invoicing-ui/           # Frontend React (Fase 10)
+    invoicing-ui/           # Frontend React (Fase 10 — pendiente)
+ server.js                   # Custom server: dotenv + node-cron jobs
+ .env                        # Credenciales SMTP (no se sube a git)
  .cdsrc.json                 # Config: SQLite in-memory + auth mocked
  package.json
 ```
@@ -74,8 +79,8 @@ Namespace: `easybill`
 
 | Entidad | Descripción |
 |---|---|
-| `Companies` | Empresa emisora (CUIT, razón social, condición IVA) |
-| `Clients` | Clientes con condición IVA (`RI`, `MT`, `EX`, `CF`) |
+| `Companies` | Empresa emisora (CUIT, razón social, condición IVA, domicilio) |
+| `Clients` | Clientes con condición IVA (`RI`, `MT`, `EX`, `CF`) y domicilio |
 | `Products` | Productos/servicios con alícuota IVA |
 | `Orders` + `OrderItems` | Pedidos con Draft Handling habilitado |
 | `Invoices` + `InvoiceItems` | Facturas A/B/C con CAE y punto de venta |
@@ -86,12 +91,14 @@ Namespace: `easybill`
 ### Tipos definidos
 
 ```cds
-type CUIT          : String(13);
-type IVARate       : Decimal(5, 2);
-type IVACondicion  : String(2)  enum { RI; MT; EX; CF };
-type InvoiceType   : String(1)  enum { A; B; C };
-type OrderStatus   : String(10) enum { Borrador; Aprobada; Facturada; Anulada };
-type InvoiceStatus : String(10) enum { Emitida; Pagada; Vencida; Anulada };
+type CUIT             : String(13);
+type IVARate          : Decimal(5, 2);
+type IVACondicion     : String(2)  enum { RI; MT; EX; CF };
+type InvoiceType      : String(1)  enum { A; B; C };
+type OrderStatus      : String(20) enum { Borrador; Aprobada; Facturada; Anulada };
+type InvoiceStatus    : String(20) enum { Emitida; Pagada; Vencida; Anulada };
+type CreditNoteStatus : String(20) enum { Emitida; Anulada };
+type PaymentMethod    : String(20) enum { Transferencia; Cheque; Efectivo; TarjetaDebito };
 ```
 
 ---
@@ -109,13 +116,25 @@ Todos los servicios están disponibles bajo `/odata/v4/`.
 | `AuditService` | `/odata/v4/audit` | `admin`, `contador` |
 | `AdminService` | `/odata/v4/admin` | `admin` |
 
+### Matriz de permisos por operación (`@restrict`)
+
+| Operación | admin | contador | vendedor |
+|---|---|---|---|
+| Leer pedidos/items | ✅ | ✅ | ✅ |
+| Crear/editar pedidos | ✅ | ❌ | ✅ |
+| Aprobar pedido | ✅ | ❌ | ✅ |
+| Leer facturas/pagos/NC | ✅ | ✅ | ❌ |
+| Crear factura/pago/NC | ✅ | ✅ | ❌ |
+| Modificar/anular factura | ✅ | ❌ | ❌ |
+| Eliminar documento fiscal | 🚫 405 | 🚫 405 | 🚫 405 |
+
 ### Acciones disponibles
 
 ```
-POST /odata/v4/order/approve                  { "orderID": "..." }
-POST /odata/v4/invoice/void                   { "invoiceID": "...", "motivo": "..." }
-POST /odata/v4/invoice/generatePDF            { "invoiceID": "..." }
-POST /odata/v4/creditnote/voidCreditNote      { "creditNoteID": "...", "motivo": "..." }
+POST /odata/v4/order/approve              { "orderID": "..." }
+POST /odata/v4/invoice/void               { "invoiceID": "...", "motivo": "..." }
+POST /odata/v4/invoice/generatePDF        { "invoiceID": "..." }
+POST /odata/v4/creditnote/voidCreditNote  { "creditNoteID": "...", "motivo": "..." }
 ```
 
 ---
@@ -148,10 +167,59 @@ POST /odata/v4/creditnote/voidCreditNote      { "creditNoteID": "...", "motivo":
 - `this.emit()` en cada servicio productor
 - `AuditService` usa `cds.connect.to()` para suscribirse a todos los eventos y persistirlos en `AuditLog`
 
-### Servicios externos simulados
+### Fase 6 — Job Scheduling
+- `server.js` como custom server entry point con `dotenv.config()` al inicio
+- **Job 1** `0 0 * * *` (medianoche): marca facturas vencidas como `Vencida`
+- **Job 2** `0 8 * * *` (8am): detecta facturas por vencer en ≤ 3 días (placeholder SSE)
+- Output en consola: `[Jobs] Schedulers inicializados ✓`
+
+### Fase 7 — Autorización
+- `@restrict` por operación (READ/CREATE/UPDATE/DELETE/INVOKE) y rol en todos los servicios
+- Guards `before DELETE` en `Invoices`, `Payments` y `CreditNotes` → 405 en cualquier rol (documentos fiscales no se borran físicamente)
+
+### Mejoras AFIP
+- **Validación CUIT** con dígito verificador algorítmico (`srv/lib/cuit.js`) — valida emisor y receptor antes de emitir cualquier comprobante
+- **PDF profesional por tipo de comprobante:**
+  - **Factura A:** IVA discriminado por alícuota, columna Imp.IVA, leyenda de crédito fiscal
+  - **Factura B:** IVA incluido visible, leyenda "IVA incluido en el precio"
+  - **Factura C:** total simple, leyenda "Emisor Monotributista — no genera crédito fiscal"
+- **Datos fiscales completos en PDF:** razón social, CUIT, condición IVA y domicilio de emisor y receptor en dos columnas, leyenda **ORIGINAL** en esquina superior derecha
+
+### Nota de Crédito parcial
+- Si el POST incluye `items` → NC parcial: valida cantidades contra la factura original, permite ítems sueltos
+- Si no incluye `items` → NC total: copia todos los ítems automáticamente
+- Precio y alícuota siempre tomados de la factura original
+
+### Emails transaccionales (nodemailer + Mailtrap)
+| Evento | Email enviado |
+|---|---|
+| Factura emitida | Datos del comprobante (tipo, número, CAE, importe) |
+| Pago registrado | Importe pagado y estado actualizado de la deuda |
+| Factura anulada | Notificación con motivo de anulación |
+| NC emitida | Importe acreditado |
+
+### Servicios externos
 - **AfipService:** genera CAE de 14 dígitos con fecha de vencimiento (+10 días)
-- **EmailService:** simula envío de email de factura/nota de crédito via `console.log`
-- **PdfService:** genera un PDF A4 real con `pdfkit` en `tmp/pdfs/`
+- **EmailService:** envío real via nodemailer apuntando a Mailtrap SMTP — 4 funciones (factura, pago, anulación, NC)
+- **PdfService:** PDF A4 profesional con `pdfkit`, diferenciado por tipo A/B/C en `tmp/pdfs/`
+
+---
+
+## Configuración de email (Mailtrap)
+
+1. Crear cuenta gratis en [mailtrap.io](https://mailtrap.io)
+2. Ir a **Email Testing → My Inbox → Integration → Nodemailer**
+3. Copiar las credenciales al archivo `.env`:
+
+```env
+SMTP_HOST=sandbox.smtp.mailtrap.io
+SMTP_PORT=2525
+SMTP_USER=tu_usuario
+SMTP_PASS=tu_password
+MAIL_FROM=noreply@easybill.com.ar
+```
+
+> El `.env` está en `.gitignore` — nunca se sube a git.
 
 ---
 
@@ -215,9 +283,9 @@ Tests ubicados en `test/**/*.test.js`. Cobertura configurada sobre `srv/**/*.js`
 
 La base in-memory se inicializa automáticamente con:
 
-- **1 empresa:** Tech Solutions S.R.L. (CUIT `30-71234567-8`, condición RI)
-- **5 clientes:** con distintas condiciones IVA (RI, MT, EX, CF)
-- **8 productos:** con alícuotas 0%, 10.5%, 21% y 27%
+- **1 empresa:** Tech Solutions S.R.L. (CUIT `30-71234567-8`, RI, domicilio CABA)
+- **4 clientes:** con distintas condiciones IVA (RI, CF, MT, RI) con domicilios reales
+- **Productos:** con alícuotas 0%, 10.5%, 21%
 
 ---
 
@@ -225,16 +293,20 @@ La base in-memory se inicializa automáticamente con:
 
 | Fase | Estado | Descripción |
 |---|---|---|
-| 1  Schema |  | Modelo de datos completo |
-| 2  Servicios |  | Lógica de negocio en los 5 servicios |
-| 3  Draft Handling |  | `@odata.draft.enabled` en Orders |
-| 4  Concurrencia |  | `@odata.etag` + handlers 412 |
-| 5  Event Mesh |  | Eventos CDS + `cds.connect.to()` |
-| 6  Job Scheduling |  | `node-cron`: vencimientos + alertas SSE |
-| 7  Autorización |  | `@restrict` por operación y rol |
-| 8  Unit Testing |  | Jest: servicios y helpers |
-| 9  SSE |  | Server-Sent Events para notificaciones |
-| 10  Frontend |  | React + UI5: 6 vistas completas |
+| 1 — Schema | ✅ | Modelo de datos completo |
+| 2 — Servicios | ✅ | Lógica de negocio en los 5 servicios |
+| 3 — Draft Handling | ✅ | `@odata.draft.enabled` en Orders |
+| 4 — Concurrencia | ✅ | `@odata.etag` + handlers 412 |
+| 5 — Event Mesh | ✅ | Eventos CDS + `cds.connect.to()` |
+| 6 — Job Scheduling | ✅ | `node-cron`: vencimientos + alertas |
+| 7 — Autorización | ✅ | `@restrict` + guards DELETE 405 |
+| AFIP compliance | ✅ | CUIT validator, PDF A/B/C, IVA discriminado |
+| NC parcial | ✅ | NC total y parcial por ítem |
+| Email real | ✅ | nodemailer + Mailtrap, 4 funciones |
+| 8 — Unit Testing | ⏳ | Jest: servicios y helpers |
+| 9 — SSE | ⏳ | Server-Sent Events para notificaciones push |
+| 10 — Frontend | ⏳ | React: 6 vistas + login + toasts |
+
 
 ---
 
