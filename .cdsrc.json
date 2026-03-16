@@ -1,0 +1,25 @@
+{
+  "requires": {
+    "db": {
+      "kind": "sqlite",
+      "credentials": { "url": ":memory:" }
+    },
+    "auth": {
+      "kind": "mocked",
+      "users": {
+        "admin": {
+          "password": "admin",
+          "roles": ["admin", "contador", "vendedor"]
+        },
+        "contador": {
+          "password": "contador",
+          "roles": ["contador"]
+        },
+        "vendedor": {
+          "password": "vendedor",
+          "roles": ["vendedor"]
+        }
+      }
+    }
+  }
+}
