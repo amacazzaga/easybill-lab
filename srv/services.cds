@@ -7,15 +7,33 @@ service OrderService @(requires: ['admin','vendedor','contador']) {
 
   @odata.draft.enabled
   @odata.etag: modifiedAt
+  @restrict: [
+    { grant: 'READ',   to: ['admin','vendedor','contador'] },
+    { grant: 'CREATE', to: ['admin','vendedor'] },
+    { grant: 'UPDATE', to: ['admin','vendedor'] },
+    { grant: 'DELETE', to: ['admin','vendedor'] }
+  ]
   entity Orders     as projection on easybill.Orders;
+
+  @restrict: [
+    { grant: 'READ',   to: ['admin','vendedor','contador'] },
+    { grant: 'CREATE', to: ['admin','vendedor'] },
+    { grant: 'UPDATE', to: ['admin','vendedor'] },
+    { grant: 'DELETE', to: ['admin','vendedor'] }
+  ]
   entity OrderItems as projection on easybill.OrderItems;
+
+  @readonly
   entity Clients    as projection on easybill.Clients { * } where activo = true;
+
+  @readonly
   entity Products   as projection on easybill.Products { * } where activo = true;
 
+  @restrict: [{ grant: 'INVOKE', to: ['admin','vendedor'] }]
   action approve(orderID: UUID) returns { message: String };
 
   // Eventos emitidos por este servicio
-  event OrderPlaced  { orderID: UUID; companyID: UUID; numero: String; }
+  event OrderPlaced   { orderID: UUID; companyID: UUID; numero: String; }
   event OrderApproved { orderID: UUID; companyID: UUID; }
 }
 
@@ -25,11 +43,24 @@ service OrderService @(requires: ['admin','vendedor','contador']) {
 service InvoiceService @(requires: ['admin','contador']) {
 
   @odata.etag: modifiedAt
+  @restrict: [
+    { grant: 'READ',   to: ['admin','contador'] },
+    { grant: 'CREATE', to: ['admin','contador'] },
+    { grant: 'UPDATE', to: ['admin'] },
+    { grant: 'DELETE', to: ['admin'] }
+  ]
   entity Invoices      as projection on easybill.Invoices;
+
+  @readonly
   entity InvoiceItems  as projection on easybill.InvoiceItems;
+
+  @readonly
   entity Orders        as projection on easybill.Orders { * } where estado = 'Aprobada';
 
+  @restrict: [{ grant: 'INVOKE', to: ['admin','contador'] }]
   action void(invoiceID: UUID, motivo: String) returns { message: String };
+
+  @restrict: [{ grant: 'INVOKE', to: ['admin','contador'] }]
   action generatePDF(invoiceID: UUID)          returns { url: String };
 
   // Eventos emitidos por este servicio
@@ -42,7 +73,15 @@ service InvoiceService @(requires: ['admin','contador']) {
 // ─────────────────────────────────────────────
 service PaymentService @(requires: ['admin','contador']) {
 
+  @restrict: [
+    { grant: 'READ',   to: ['admin','contador'] },
+    { grant: 'CREATE', to: ['admin','contador'] },
+    { grant: 'UPDATE', to: ['admin'] },
+    { grant: 'DELETE', to: ['admin'] }
+  ]
   entity Payments  as projection on easybill.Payments;
+
+  @readonly
   entity Invoices  as projection on easybill.Invoices { * } where estado in ('Emitida','Vencida');
 
   // Eventos emitidos por este servicio
@@ -55,10 +94,21 @@ service PaymentService @(requires: ['admin','contador']) {
 service CreditNoteService @(requires: ['admin','contador']) {
 
   @odata.etag: modifiedAt
+  @restrict: [
+    { grant: 'READ',   to: ['admin','contador'] },
+    { grant: 'CREATE', to: ['admin','contador'] },
+    { grant: 'UPDATE', to: ['admin'] },
+    { grant: 'DELETE', to: ['admin'] }
+  ]
   entity CreditNotes      as projection on easybill.CreditNotes;
+
+  @readonly
   entity CreditNoteItems  as projection on easybill.CreditNoteItems;
+
+  @readonly
   entity Invoices         as projection on easybill.Invoices;
 
+  @restrict: [{ grant: 'INVOKE', to: ['admin','contador'] }]
   action voidCreditNote(creditNoteID: UUID, motivo: String) returns { message: String };
 
   // Eventos emitidos por este servicio
