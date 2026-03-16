@@ -106,6 +106,11 @@ module.exports = class CreditNoteService extends cds.ApplicationService {
       return { message: `Nota de crédito ${cn.numero} anulada correctamente` }
     })
 
+    // ── before DELETE — documentos fiscales no se eliminan físicamente ──
+    this.before('DELETE', CreditNotes, (req) => {
+      req.reject(405, 'Las notas de crédito no se pueden eliminar. Use la acción voidCreditNote() para anularlas.')
+    })
+
     return super.init()
   }
 }

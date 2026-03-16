@@ -48,6 +48,11 @@ module.exports = class PaymentService extends cds.ApplicationService {
       })
     })
 
+    // ── before DELETE — pagos no se eliminan físicamente ──
+    this.before('DELETE', Payments, (req) => {
+      req.reject(405, 'Los pagos no se pueden eliminar.')
+    })
+
     return super.init()
   }
 }

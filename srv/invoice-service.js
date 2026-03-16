@@ -1,7 +1,8 @@
 const cds    = require('@sap/cds')
-const AfipService  = require('./external/AfipService')
-const EmailService = require('./external/EmailService')
-const PdfService   = require('./external/PdfService')
+const AfipService    = require('./external/AfipService')
+const EmailService   = require('./external/EmailService')
+const PdfService     = require('./external/PdfService')
+const { validateCuit } = require('./lib/cuit')
 
 module.exports = class InvoiceService extends cds.ApplicationService {
 
@@ -27,7 +28,18 @@ module.exports = class InvoiceService extends cds.ApplicationService {
         return req.error(409, 'Este pedido ya tiene una factura emitida')
 
       // Determinar tipo de comprobante según condición IVA del cliente
-      const client = await SELECT.one.from(Clients).where({ ID: order.client_ID })
+      const client  = await SELECT.one.from(Clients).where({ ID: order.client_ID })
+      const company = await SELECT.one.from(db.entities('easybill').Companies).where({ ID: order.company_ID })
+
+      // Validar CUITs antes de emitir
+      const cuitClientResult  = validateCuit(client.cuit)
+      if (!cuitClientResult.valid)
+        return req.error(400, `CUIT del cliente inválido: ${cuitClientResult.message}`)
+
+      const cuitCompanyResult = validateCuit(company.cuit)
+      if (!cuitCompanyResult.valid)
+        return req.error(400, `CUIT de la empresa inválido: ${cuitCompanyResult.message}`)
+
       const tipoComprobante = _determineTipoComprobante(client.condicionIVA)
 
       // Obtener ítems de la order para copiarlos
@@ -162,8 +174,17 @@ module.exports = class InvoiceService extends cds.ApplicationService {
       const items = await SELECT.from(this.entities.InvoiceItems)
         .where({ invoice_ID: invoiceID })
 
-      const url = await PdfService.generateInvoicePDF(invoice, items)
+      const dbConn  = await cds.connect.to('db')
+      const company = await SELECT.one.from(dbConn.entities('easybill').Companies).where({ ID: invoice.company_ID })
+      const client  = await SELECT.one.from(dbConn.entities('easybill').Clients).where({ ID: invoice.client_ID })
+
+      const url = await PdfService.generateInvoicePDF(invoice, items, company, client)
       return { url }
+    })
+
+    // ── before DELETE — documentos fiscales no se eliminan físicamente ──
+    this.before('DELETE', Invoices, (req) => {
+      req.reject(405, 'Las facturas no se pueden eliminar. Use la acción void() para anularlas.')
     })
 
     return super.init()
@@ -177,12 +198,6 @@ function _determineTipoComprobante(condicionIVA) {
   if (condicionIVA === 'RI') return 'A'
   if (condicionIVA === 'MT') return 'C'
   return 'B'
-}
-
-function _addDays(dateStr, days) {
-  const d = new Date(dateStr)
-  d.setDate(d.getDate() + days)
-  return d.toISOString().split('T')[0]
 }
 
 function _addDays(dateStr, days) {
