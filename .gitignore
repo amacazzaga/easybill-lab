@@ -9,6 +9,9 @@ gen/
 node_modules/
 target/
 
+# Variables de entorno — credenciales SMTP y secrets
+.env
+
 # Web IDE, App Studio
 .che/
 .gen/

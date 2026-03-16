@@ -1,5 +1,7 @@
 'use strict'
 
+require('dotenv').config()
+
 const cds  = require('@sap/cds')
 const cron = require('node-cron')
 

@@ -5,8 +5,10 @@
   "dependencies": {
     "@sap/cds": "^9",
     "@sap/cds-dk": "^9.8.0",
+    "dotenv": "^17.3.1",
     "express": "^4",
     "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.2",
     "pdfkit": "^0.17.2"
   },
   "devDependencies": {
@@ -28,7 +30,10 @@
       "srv/**/*.js",
       "!srv/**/index.js"
     ],
-    "coverageReporters": ["text", "html"]
+    "coverageReporters": [
+      "text",
+      "html"
+    ]
   },
   "private": true
 }

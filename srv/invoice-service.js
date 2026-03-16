@@ -152,6 +152,10 @@ module.exports = class InvoiceService extends cds.ApplicationService {
         .set({ estado: 'Aprobada', invoice_ID: null })
         .where({ ID: invoice.order_ID })
 
+      // Notificar al cliente por email
+      const clientVoid = await SELECT.one.from(db.entities('easybill').Clients).where({ ID: invoice.client_ID })
+      await EmailService.sendVoidNotification(invoice, clientVoid, motivo)
+
       await this.emit('InvoiceVoided', {
         invoiceID: invoiceID,
         companyID: invoice.company_ID,

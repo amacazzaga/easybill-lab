@@ -1,4 +1,5 @@
 const cds = require('@sap/cds')
+const EmailService = require('./external/EmailService')
 
 module.exports = class PaymentService extends cds.ApplicationService {
 
@@ -36,6 +37,15 @@ module.exports = class PaymentService extends cds.ApplicationService {
           .set({ estado: 'Pagada' })
           .where({ ID: payment.invoice_ID })
       }
+
+      // Enviar confirmacion de pago al cliente
+      const db = await cds.connect.to('db')
+      const client = await SELECT.one.from(db.entities('easybill').Clients).where({ ID: invoice.client_ID })
+      await EmailService.sendPaymentConfirmation(
+        { importe: payment.importe, pagada: totalPagado >= invoice.total },
+        invoice,
+        client
+      )
 
       await this.emit('PaymentReceived', {
         paymentID:    payment.ID,
