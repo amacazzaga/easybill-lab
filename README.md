@@ -5,7 +5,6 @@ Aplicación de facturación electrónica argentina construida en **SAP CAP Node.
 ## Objetivo
 Demostrar dominio de CAP Node.js, patrones enterprise y lógica fiscal argentina en un caso real.
 
-
 ## Alcances
 
 EasyBill Lab es una solución completa de facturación electrónica pensada para empresas argentinas, con foco en la realidad fiscal local y en la experiencia de usuario para distintos roles (vendedor, contador, administrador).
@@ -60,8 +59,6 @@ easybill-lab/
 - **AfipService:** genera CAE de 14 dígitos con fecha de vencimiento (+10 días)
 - **EmailService:** envío real via nodemailer apuntando a Mailtrap SMTP — 4 funciones (factura, pago, anulación, NC)
 - **PdfService:** PDF A4 profesional con `pdfkit`, diferenciado por tipo A/B/C en `tmp/pdfs/`
-
----
 
 ## Instalación y ejecución
 

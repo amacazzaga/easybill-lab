@@ -2,8 +2,39 @@
 
 require('dotenv').config()
 
+
 const cds  = require('@sap/cds')
 const cron = require('node-cron')
+const express = require('express')
+
+// ═══════════════════════════════════════════════════════════════
+// SSE — Server-Sent Events (Fase 9)
+// ═══════════════════════════════════════════════════════════════
+const clients = []
+
+function broadcast(data) {
+  const msg = `data: ${JSON.stringify(data)}\n\n`
+  clients.forEach(res => res.write(msg))
+}
+
+// Hook para agregar el endpoint SSE al servidor Express de CAP
+cds.on('bootstrap', app => {
+  app.get('/api/sse', (req, res) => {
+    res.set({
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+      'Access-Control-Allow-Origin': '*'
+    })
+    res.flushHeaders()
+    res.write('retry: 10000\n\n')
+    clients.push(res)
+    req.on('close', () => {
+      const idx = clients.indexOf(res)
+      if (idx >= 0) clients.splice(idx, 1)
+    })
+  })
+})
 
 // ═══════════════════════════════════════════════════════════════
 // Fase 6 — Job Scheduling
@@ -67,8 +98,8 @@ cds.on('served', async () => {
         console.log(`  → ${inv.numero} | Vence: ${inv.fechaVencimiento} | Total: $${inv.total}`)
       }
 
-      // TODO Fase 9: reemplazar por broadcast SSE
-      // broadcast({ tipo: 'FACTURAS_POR_VENCER', facturas: porVencer })
+      // Fase 9: broadcast SSE
+      broadcast({ tipo: 'FACTURAS_POR_VENCER', facturas: porVencer })
     } catch (err) {
       console.error('[Job:Alertas] Error:', err.message)
     }
