@@ -308,6 +308,7 @@ La base in-memory se inicializa automáticamente con:
 | 8 — Unit Testing | ⏳ | Jest: servicios y helpers |
 | 9 — SSE | ⏳ | Server-Sent Events para notificaciones push |
 | 10 — Frontend | ⏳ | React: 6 vistas + login + toasts |
+| Bonus — AFIP Homologación | ⏳ | Reemplazar mock por `@afipsdk/afip.js`, certificado propio, `production: false` |
 
 
 ---

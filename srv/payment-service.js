@@ -4,36 +4,45 @@ const EmailService = require('./external/EmailService')
 module.exports = class PaymentService extends cds.ApplicationService {
 
   async init() {
-    const { Payments, Invoices } = this.entities
+
+    // handler de diagnóstico - sin filtro de entidad, intercepta todo CREATE
+    this.before('CREATE', async (req) => {
+      console.error('[DIAG] CREATE - entity:', req.entity, '- path:', req.path)
+    })
 
     // ── before CREATE ──────────────────────────────────────────
-    this.before('CREATE', Payments, async (req) => {
+    // Usamos el nombre de entidad como string (no referencia) para
+    // garantizar que el filtro h.for(req) matchee correctamente en CAP v9.
+    // Usamos 'easybill.Invoices' directamente para ver estados Pagada/Anulada
+    // (la proyección del servicio solo muestra Emitida/Vencida).
+    this.before('CREATE', 'Payments', async (req) => {
+      console.error('[DEBUG] before CREATE Payments - entity:', req.entity, '- path:', req.path, '- target:', req.target?.name)
       const { invoice_ID, importe } = req.data
 
       if (!importe || importe <= 0)
-        return req.error(400, 'El importe del pago debe ser mayor a 0')
+        req.reject(400, 'El importe del pago debe ser mayor a 0')
 
-      const invoice = await SELECT.one.from(Invoices).where({ ID: invoice_ID })
+      const invoice = await SELECT.one.from('easybill.Invoices').where({ ID: invoice_ID })
 
       if (!invoice)
-        return req.error(404, `Factura ${invoice_ID} no encontrada`)
+        req.reject(404, `Factura ${invoice_ID} no encontrada`)
       if (invoice.estado === 'Pagada')
-        return req.error(409, 'La factura ya está completamente pagada')
+        req.reject(409, 'La factura ya está completamente pagada')
       if (invoice.estado === 'Anulada')
-        return req.error(409, 'No se pueden registrar pagos en una factura anulada')
+        req.reject(409, 'No se pueden registrar pagos en una factura anulada')
     })
 
     // ── after CREATE ───────────────────────────────────────────
-    this.after('CREATE', Payments, async (payment, req) => {
-      const invoice = await SELECT.one.from(Invoices).where({ ID: payment.invoice_ID })
+    this.after('CREATE', 'Payments', async (payment, req) => {
+      const invoice = await SELECT.one.from('easybill.Invoices').where({ ID: payment.invoice_ID })
 
       // Sumar todos los pagos de esta factura
-      const pagos = await SELECT.from(Payments).where({ invoice_ID: payment.invoice_ID })
+      const pagos = await SELECT.from('easybill.Payments').where({ invoice_ID: payment.invoice_ID })
       const totalPagado = pagos.reduce((s, p) => s + p.importe, 0)
 
       // Si se cubre el total → marcar como Pagada
       if (totalPagado >= invoice.total) {
-        await UPDATE(Invoices)
+        await UPDATE('easybill.Invoices')
           .set({ estado: 'Pagada' })
           .where({ ID: payment.invoice_ID })
       }
@@ -59,7 +68,7 @@ module.exports = class PaymentService extends cds.ApplicationService {
     })
 
     // ── before DELETE — pagos no se eliminan físicamente ──
-    this.before('DELETE', Payments, (req) => {
+    this.before('DELETE', 'Payments', (req) => {
       req.reject(405, 'Los pagos no se pueden eliminar.')
     })
 

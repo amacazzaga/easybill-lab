@@ -12,7 +12,7 @@ module.exports = class InvoiceService extends cds.ApplicationService {
     const { Orders: DBOrders, OrderItems, Clients } = db.entities('easybill')
 
     // ── before CREATE ──────────────────────────────────────────
-    this.before('CREATE', Invoices, async (req) => {
+    this.before('CREATE', 'Invoices', async (req) => {
       const { order_ID, puntoVenta = '0001' } = req.data
 
       // Validar que la Order existe y está Aprobada
@@ -21,11 +21,11 @@ module.exports = class InvoiceService extends cds.ApplicationService {
         .where({ ID: order_ID })
 
       if (!order)
-        return req.error(404, `Pedido ${order_ID} no encontrado`)
+        return req.reject(404, `Pedido ${order_ID} no encontrado`)
       if (order.estado !== 'Aprobada')
-        return req.error(400, `El pedido debe estar Aprobado para facturar. Estado actual: ${order.estado}`)
+        return req.reject(400, `El pedido debe estar Aprobado para facturar. Estado actual: ${order.estado}`)
       if (order.invoice_ID)
-        return req.error(409, 'Este pedido ya tiene una factura emitida')
+        return req.reject(409, 'Este pedido ya tiene una factura emitida')
 
       // Determinar tipo de comprobante según condición IVA del cliente
       const client  = await SELECT.one.from(Clients).where({ ID: order.client_ID })
@@ -34,11 +34,11 @@ module.exports = class InvoiceService extends cds.ApplicationService {
       // Validar CUITs antes de emitir
       const cuitClientResult  = validateCuit(client.cuit)
       if (!cuitClientResult.valid)
-        return req.error(400, `CUIT del cliente inválido: ${cuitClientResult.message}`)
+        return req.reject(400, `CUIT del cliente inválido: ${cuitClientResult.message}`)
 
       const cuitCompanyResult = validateCuit(company.cuit)
       if (!cuitCompanyResult.valid)
-        return req.error(400, `CUIT de la empresa inválido: ${cuitCompanyResult.message}`)
+        return req.reject(400, `CUIT de la empresa inválido: ${cuitCompanyResult.message}`)
 
       const tipoComprobante = _determineTipoComprobante(client.condicionIVA)
 
@@ -93,7 +93,7 @@ module.exports = class InvoiceService extends cds.ApplicationService {
     })
 
     // ── after CREATE ───────────────────────────────────────────
-    this.after('CREATE', Invoices, async (invoice, req) => {
+    this.after('CREATE', 'Invoices', async (invoice, req) => {
       const db = await cds.connect.to('db')
       const { Orders: DBOrders } = db.entities('easybill')
 
@@ -123,13 +123,13 @@ module.exports = class InvoiceService extends cds.ApplicationService {
     })
 
     // ── before UPDATE — bloquear si Emitida/Pagada ─────────────
-    this.before('UPDATE', Invoices, async (req) => {
+    this.before('UPDATE', 'Invoices', async (req) => {
       const { ID } = req.params[0]
       const invoice = await SELECT.one.from(Invoices).where({ ID })
-      if (!invoice) return req.error(404, 'Factura no encontrada')
+      if (!invoice) return req.reject(404, 'Factura no encontrada')
 
       if (['Emitida', 'Pagada'].includes(invoice.estado))
-        return req.error(409, `No se puede modificar una factura en estado "${invoice.estado}"`)
+        return req.reject(409, `No se puede modificar una factura en estado "${invoice.estado}"`)
     })
 
     // ── ACTION: void ───────────────────────────────────────────
@@ -138,11 +138,11 @@ module.exports = class InvoiceService extends cds.ApplicationService {
       const invoice = await SELECT.one.from(Invoices).where({ ID: invoiceID })
 
       if (!invoice)
-        return req.error(404, `Factura ${invoiceID} no encontrada`)
+        return req.reject(404, `Factura ${invoiceID} no encontrada`)
       if (invoice.estado === 'Anulada')
-        return req.error(409, 'La factura ya está anulada')
+        return req.reject(409, 'La factura ya está anulada')
       if (invoice.estado === 'Pagada')
-        return req.error(409, 'No se puede anular una factura pagada')
+        return req.reject(409, 'No se puede anular una factura pagada')
 
       await UPDATE(Invoices).set({ estado: 'Anulada' }).where({ ID: invoiceID })
 
@@ -173,7 +173,7 @@ module.exports = class InvoiceService extends cds.ApplicationService {
         .columns('*')
         .where({ ID: invoiceID })
 
-      if (!invoice) return req.error(404, 'Factura no encontrada')
+      if (!invoice) return req.reject(404, 'Factura no encontrada')
 
       const items = await SELECT.from(this.entities.InvoiceItems)
         .where({ invoice_ID: invoiceID })
@@ -187,7 +187,7 @@ module.exports = class InvoiceService extends cds.ApplicationService {
     })
 
     // ── before DELETE — documentos fiscales no se eliminan físicamente ──
-    this.before('DELETE', Invoices, (req) => {
+    this.before('DELETE', 'Invoices', (req) => {
       req.reject(405, 'Las facturas no se pueden eliminar. Use la acción void() para anularlas.')
     })
 
@@ -209,3 +209,6 @@ function _addDays(dateStr, days) {
   d.setDate(d.getDate() + days)
   return d.toISOString().split('T')[0]
 }
+
+// Exportados para unit testing
+module.exports._helpers = { _determineTipoComprobante, _addDays }

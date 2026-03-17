@@ -9,24 +9,24 @@ module.exports = class CreditNoteService extends cds.ApplicationService {
     const { InvoiceItems } = db.entities('easybill')
 
     // ── before CREATE ──────────────────────────────────────────
-    this.before('CREATE', CreditNotes, async (req) => {
+    this.before('CREATE', 'CreditNotes', async (req) => {
       const { invoice_ID, puntoVenta = '0001', motivo } = req.data
 
       if (!motivo || motivo.trim() === '')
-        return req.error(400, 'Debe indicar un motivo para la nota de crédito')
+        return req.reject(400, 'Debe indicar un motivo para la nota de crédito')
 
       const invoice = await SELECT.one.from(Invoices).where({ ID: invoice_ID })
 
       if (!invoice)
-        return req.error(404, `Factura ${invoice_ID} no encontrada`)
+        return req.reject(404, `Factura ${invoice_ID} no encontrada`)
       if (invoice.estado === 'Anulada')
-        return req.error(409, 'No se puede emitir nota de crédito sobre una factura anulada')
+        return req.reject(409, 'No se puede emitir nota de crédito sobre una factura anulada')
 
       // Verificar que no exista una nota de crédito activa para esta factura
       const existingCN = await SELECT.one.from(CreditNotes)
         .where({ invoice_ID, estado: 'Emitida' })
       if (existingCN)
-        return req.error(409, 'Ya existe una nota de crédito emitida para esta factura')
+        return req.reject(409, 'Ya existe una nota de crédito emitida para esta factura')
 
       // Número de nota de crédito auto-generado
       const lastCN = await SELECT.one
@@ -60,11 +60,11 @@ module.exports = class CreditNoteService extends cds.ApplicationService {
         for (const item of req.data.items) {
           const original = itemsOriginales[item.product_ID]
           if (!original)
-            return req.error(400, `El producto ${item.product_ID} no pertenece a la factura original`)
+            return req.reject(400, `El producto ${item.product_ID} no pertenece a la factura original`)
           if (item.cantidad <= 0)
-            return req.error(400, `La cantidad debe ser mayor a 0 (producto ${item.product_ID})`)
+            return req.reject(400, `La cantidad debe ser mayor a 0 (producto ${item.product_ID})`)
           if (Number(item.cantidad) > Number(original.cantidad))
-            return req.error(400, `La cantidad (${item.cantidad}) supera la facturada (${original.cantidad}) para el producto ${item.product_ID}`)
+            return req.reject(400, `La cantidad (${item.cantidad}) supera la facturada (${original.cantidad}) para el producto ${item.product_ID}`)
         }
 
         // Precio/alícuota tomados de la factura original — no se re-ingresan
@@ -118,7 +118,7 @@ module.exports = class CreditNoteService extends cds.ApplicationService {
     })
 
     // ── after CREATE ───────────────────────────────────────────
-    this.after('CREATE', CreditNotes, async (creditNote, req) => {
+    this.after('CREATE', 'CreditNotes', async (creditNote, req) => {
       await this.emit('CreditNoteIssued', {
         creditNoteID: creditNote.ID,
         invoiceID:    creditNote.invoice_ID,
@@ -133,9 +133,9 @@ module.exports = class CreditNoteService extends cds.ApplicationService {
       const cn = await SELECT.one.from(CreditNotes).where({ ID: creditNoteID })
 
       if (!cn)
-        return req.error(404, `Nota de crédito ${creditNoteID} no encontrada`)
+        return req.reject(404, `Nota de crédito ${creditNoteID} no encontrada`)
       if (cn.estado === 'Anulada')
-        return req.error(409, 'La nota de crédito ya está anulada')
+        return req.reject(409, 'La nota de crédito ya está anulada')
 
       await UPDATE(CreditNotes).set({ estado: 'Anulada' }).where({ ID: creditNoteID })
 
@@ -149,7 +149,7 @@ module.exports = class CreditNoteService extends cds.ApplicationService {
     })
 
     // ── before DELETE — documentos fiscales no se eliminan físicamente ──
-    this.before('DELETE', CreditNotes, (req) => {
+    this.before('DELETE', 'CreditNotes', (req) => {
       req.reject(405, 'Las notas de crédito no se pueden eliminar. Use la acción voidCreditNote() para anularlas.')
     })
 

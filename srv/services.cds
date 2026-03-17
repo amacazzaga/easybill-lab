@@ -3,6 +3,7 @@ using { easybill } from '../db/schema';
 // ─────────────────────────────────────────────
 // OrderService — gestión de pedidos
 // ─────────────────────────────────────────────
+@(impl: 'srv/order-service.js')
 service OrderService @(requires: ['admin','vendedor','contador']) {
 
   @odata.draft.enabled
@@ -40,6 +41,7 @@ service OrderService @(requires: ['admin','vendedor','contador']) {
 // ─────────────────────────────────────────────
 // InvoiceService — emisión y gestión de facturas
 // ─────────────────────────────────────────────
+@(impl: 'srv/invoice-service.js')
 service InvoiceService @(requires: ['admin','contador']) {
 
   @odata.etag: modifiedAt
@@ -71,6 +73,7 @@ service InvoiceService @(requires: ['admin','contador']) {
 // ─────────────────────────────────────────────
 // PaymentService — registro de pagos
 // ─────────────────────────────────────────────
+@(impl: 'srv/payment-service.js')
 service PaymentService @(requires: ['admin','contador']) {
 
   @restrict: [
@@ -91,6 +94,7 @@ service PaymentService @(requires: ['admin','contador']) {
 // ─────────────────────────────────────────────
 // CreditNoteService — notas de crédito
 // ─────────────────────────────────────────────
+@(impl: 'srv/credit-note-service.js')
 service CreditNoteService @(requires: ['admin','contador']) {
 
   @odata.etag: modifiedAt
@@ -119,6 +123,7 @@ service CreditNoteService @(requires: ['admin','contador']) {
 // ─────────────────────────────────────────────
 // AuditService — log inmutable de eventos fiscales
 // ─────────────────────────────────────────────
+@(impl: 'srv/audit-service.js')
 service AuditService @(requires: ['admin','contador']) {
 
   @readonly
