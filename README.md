@@ -79,3 +79,37 @@ cds watch
 ## Contexto del proyecto
 
 Este proyecto es el trabajo final de capacitación en **SAP CAP Node.js**, implementando un caso de uso real del mercado argentino: facturación electrónica AFIP. El objetivo es demostrar el dominio de los patrones enterprise de SAP BTP en un escenario complejo y concreto.
+
+## Roadmap
+
+**🛒 Gestión de Pedidos**
+- ✅ Borradores flexibles con recálculo en tiempo real (Draft Handling)
+- ✅ Cálculo de IVA proactivo por ítem y alícuota
+- ✅ Ciclo de vida completo: Borrador → Aprobada → Facturada → Anulada
+
+**📑 Facturación Electrónica**
+- ✅ Tipo automático A/B/C según condición IVA del cliente
+- ✅ Cumplimiento AFIP: CAE, numeración legal, validación CUIT con dígito verificador
+- ✅ PDF profesional: leyenda ORIGINAL, datos emisor/receptor con domicilio, IVA discriminado en Factura A
+- ✅ Emails transaccionales reales via Mailtrap (nodemailer): factura emitida, pago recibido, anulación, NC
+- ✅ Anulación con motivo obligatorio y reversión del pedido
+
+**💰 Pagos y Saldos**
+- ✅ Pagos parciales acumulados → estado Pagada automático al cubrir el total
+- ✅ Notas de Crédito totales y parciales (por ítem y cantidad, contra la factura original)
+- ✅ Documentos fiscales no eliminables físicamente (405 en DELETE para todos los roles)
+
+**🛡️ Seguridad y Auditoría**
+- ✅ Roles granulares por operación (`@restrict`): vendedor solo pedidos, contador solo fiscal, admin todo
+- ✅ Control de concurrencia ETag + 412 en español
+- ✅ AuditLog inmutable via Event Mesh (suscripción a todos los eventos del sistema)
+
+**🤖 Automatización**
+- ✅ Job nocturno: marca facturas vencidas automáticamente
+- ✅ Job 8am: detecta facturas por vencer en ≤ 3 días (placeholder SSE listo para conectar)
+
+**🔜 Próximas fases**
+- ✅ Fase 8: Jest unit tests (servicios y helpers de validación)
+- ✅ Fase 9: SSE endpoint completo — notificaciones push al frontend
+- ⏳ Fase 10 (en curso): Frontend React — Login, Dashboard, Pedidos, Facturas, Pagos, Auditoría
+- 🎯 Fase 11 (bonus): Homologación AFIP oficial (simulación/integración real)
