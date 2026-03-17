@@ -43,7 +43,9 @@ async function sendInvoiceEmail(invoice, client) {
       <tr><td><b>CAE</b></td><td>${invoice.cae}</td></tr>
       <tr><td><b>CAE Vto</b></td><td>${invoice.caeFechaVto}</td></tr>
     </table>
-    <p style="color:#888;font-size:12px">EasyBill &mdash; Sistema de Facturacion Electronica</p>
+    <hr style="margin-top:32px;border:none;border-top:1px solid #ddd">
+    <p style="color:#b00;font-size:11px;font-style:italic">⚠️ Este correo fue generado por <strong>EasyBill Lab</strong>, un proyecto integrador de capacitaci&oacute;n en SAP CAP Node.js. No corresponde a una operaci&oacute;n comercial real. Por favor ignor&aacute; este mensaje si lo recibiste por error.</p>
+    <p style="color:#888;font-size:11px">EasyBill &mdash; Sistema de Facturaci&oacute;n Electr&oacute;nica</p>
   `
 
   try {
@@ -76,7 +78,9 @@ async function sendPaymentConfirmation(payment, invoice, client) {
       <tr><td><b>Total factura</b></td><td>$${invoice.total}</td></tr>
       <tr><td><b>Estado</b></td><td><strong>${pagada ? 'CANCELADA TOTALMENTE' : 'Pendiente de saldo'}</strong></td></tr>
     </table>
-    <p style="color:#888;font-size:12px">EasyBill &mdash; Sistema de Facturacion Electronica</p>
+    <hr style="margin-top:32px;border:none;border-top:1px solid #ddd">
+    <p style="color:#b00;font-size:11px;font-style:italic">⚠️ Este correo fue generado por <strong>EasyBill Lab</strong>, un proyecto integrador de capacitaci&oacute;n en SAP CAP Node.js. No corresponde a una operaci&oacute;n comercial real. Por favor ignor&aacute; este mensaje si lo recibiste por error.</p>
+    <p style="color:#888;font-size:11px">EasyBill &mdash; Sistema de Facturaci&oacute;n Electr&oacute;nica</p>
   `
 
   try {
@@ -106,7 +110,9 @@ async function sendVoidNotification(invoice, client, motivo) {
       <tr><td><b>Factura</b></td><td>${invoice.numero}</td></tr>
       <tr><td><b>Motivo</b></td><td>${motivo}</td></tr>
     </table>
-    <p style="color:#888;font-size:12px">EasyBill &mdash; Sistema de Facturacion Electronica</p>
+    <hr style="margin-top:32px;border:none;border-top:1px solid #ddd">
+    <p style="color:#b00;font-size:11px;font-style:italic">⚠️ Este correo fue generado por <strong>EasyBill Lab</strong>, un proyecto integrador de capacitaci&oacute;n en SAP CAP Node.js. No corresponde a una operaci&oacute;n comercial real. Por favor ignor&aacute; este mensaje si lo recibiste por error.</p>
+    <p style="color:#888;font-size:11px">EasyBill &mdash; Sistema de Facturaci&oacute;n Electr&oacute;nica</p>
   `
 
   try {
@@ -138,7 +144,9 @@ async function sendCreditNoteEmail(creditNote, client) {
       <tr><td><b>Total acreditado</b></td><td><strong>$${creditNote.total}</strong></td></tr>
       <tr><td><b>CAE</b></td><td>${creditNote.cae}</td></tr>
     </table>
-    <p style="color:#888;font-size:12px">EasyBill &mdash; Sistema de Facturacion Electronica</p>
+    <hr style="margin-top:32px;border:none;border-top:1px solid #ddd">
+    <p style="color:#b00;font-size:11px;font-style:italic">⚠️ Este correo fue generado por <strong>EasyBill Lab</strong>, un proyecto integrador de capacitaci&oacute;n en SAP CAP Node.js. No corresponde a una operaci&oacute;n comercial real. Por favor ignor&aacute; este mensaje si lo recibiste por error.</p>
+    <p style="color:#888;font-size:11px">EasyBill &mdash; Sistema de Facturaci&oacute;n Electr&oacute;nica</p>
   `
 
   try {

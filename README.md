@@ -283,9 +283,11 @@ Tests ubicados en `test/**/*.test.js`. Cobertura configurada sobre `srv/**/*.js`
 
 La base in-memory se inicializa automáticamente con:
 
-- **1 empresa:** Tech Solutions S.R.L. (CUIT `30-71234567-8`, RI, domicilio CABA)
-- **4 clientes:** con distintas condiciones IVA (RI, CF, MT, RI) con domicilios reales
-- **Productos:** con alícuotas 0%, 10.5%, 21%
+- **1 empresa:** Tech Solutions S.R.L. (CUIT `30-71234567-8`, RI, Av. Corrientes 1554 CABA)
+- **1 empresa:** Tech Solutions S.R.L. (CUIT `30-71234567-8`, RI, Av. Corrientes 1554 CABA)
+- **60 clientes:** RI (empresas de distintos rubros y provincias: salud, agro, construcción, logística, finanzas, legal, etc.), MT (profesionales independientes), EX (universidades, hospitales públicos, municipios y ONGs), CF (personas físicas de distintas provincias)
+- **20 productos:** licencias, soporte, consultoría, infraestructura cloud, telefonía y salud — cubriendo alícuotas 0%, 10.5%, 21% y 27%
+- **20 productos:** licencias, soporte, consultoría, infraestructura cloud, telefonía y salud — cubriendo alícuotas 0%, 10.5%, 21% y 27%
 
 ---
 
