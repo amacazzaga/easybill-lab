@@ -1,22 +1,69 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
+import LoginPage from './pages/LoginPage.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
 
 function Placeholder({ title }) {
   return <h2>{title}</h2>;
 }
 
 export const routesConfig = [
-  { path: '/', element: <Placeholder title="Dashboard" /> },
-  { path: '/dashboard', element: <Placeholder title="Dashboard" /> },
-  { path: '/facturas', element: <Placeholder title="Facturación" /> },
-  { path: '/pedidos', element: <Placeholder title="Pedidos" /> },
-  { path: '/pagos', element: <Placeholder title="Pagos" /> },
-  { path: '/notas-credito', element: <Placeholder title="Notas de crédito" /> },
-  { path: '/clientes', element: <Placeholder title="Clientes" /> },
-  { path: '/productos', element: <Placeholder title="Productos" /> },
-  { path: '/reportes', element: <Placeholder title="Reportes" /> },
-  { path: '/auditoria', element: <Placeholder title="Auditoría" /> },
-  { path: '/configuracion', element: <Placeholder title="Configuración" /> },
+  { path: '/login', element: <LoginPage /> },
+  { path: '/', element: (
+      <ProtectedRoute>
+        <Placeholder title="Dashboard" />
+      </ProtectedRoute>
+    ) },
+  { path: '/dashboard', element: (
+      <ProtectedRoute>
+        <Placeholder title="Dashboard" />
+      </ProtectedRoute>
+    ) },
+  { path: '/facturas', element: (
+      <ProtectedRoute>
+        <Placeholder title="Facturación" />
+      </ProtectedRoute>
+    ) },
+  { path: '/pedidos', element: (
+      <ProtectedRoute>
+        <Placeholder title="Pedidos" />
+      </ProtectedRoute>
+    ) },
+  { path: '/pagos', element: (
+      <ProtectedRoute>
+        <Placeholder title="Pagos" />
+      </ProtectedRoute>
+    ) },
+  { path: '/notas-credito', element: (
+      <ProtectedRoute>
+        <Placeholder title="Notas de crédito" />
+      </ProtectedRoute>
+    ) },
+  { path: '/clientes', element: (
+      <ProtectedRoute>
+        <Placeholder title="Clientes" />
+      </ProtectedRoute>
+    ) },
+  { path: '/productos', element: (
+      <ProtectedRoute>
+        <Placeholder title="Productos" />
+      </ProtectedRoute>
+    ) },
+  { path: '/reportes', element: (
+      <ProtectedRoute>
+        <Placeholder title="Reportes" />
+      </ProtectedRoute>
+    ) },
+  { path: '/auditoria', element: (
+      <ProtectedRoute>
+        <Placeholder title="Auditoría" />
+      </ProtectedRoute>
+    ) },
+  { path: '/configuracion', element: (
+      <ProtectedRoute>
+        <Placeholder title="Configuración" />
+      </ProtectedRoute>
+    ) },
   { path: '*', element: <Placeholder title="No encontrado" /> },
 ];
 

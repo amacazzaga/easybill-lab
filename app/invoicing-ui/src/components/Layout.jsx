@@ -1,6 +1,7 @@
 import React from 'react';
 import ShellBar from './ShellBar';
 import SideNav from './SideNav';
+import { useLocation } from 'react-router-dom';
 
 const layoutStyle = {
   display: 'flex',
@@ -20,11 +21,13 @@ const mainStyle = {
 };
 
 export default function Layout({ children }) {
+  const location = useLocation();
+  const isLogin = location.pathname === '/login';
   return (
     <div style={layoutStyle}>
-      <ShellBar />
+      {!isLogin && <ShellBar />}
       <div style={contentStyle}>
-        <SideNav />
+        {!isLogin && <SideNav />}
         <main style={mainStyle}>{children}</main>
       </div>
     </div>
