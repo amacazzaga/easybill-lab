@@ -92,5 +92,42 @@
 
 Ambos tipos de tests son necesarios para asegurar calidad y robustez en la aplicación.
 
+Roadmap Frontend
+⚙️ Setup y Base
+
+✅ Configuración de Vite, React y UI5
+✅ Estructura de carpetas y layout principal (ShellBar, SideNavigation)
+🔐 Autenticación y Usuarios
+
+✅ Pantalla de login y lógica de autenticación
+✅ Contexto de usuario y gestión de roles
+✅ Protección de rutas y componentes
+📊 Dashboard
+
+✅ Pantalla /dashboard con KPIs y primeros gráficos
+📝 Módulos de Gestión
+
+✅ Facturas: listado, alta, edición, anulación, PDF
+✅ Pedidos: listado, alta, edición, aprobación
+✅ Pagos: listado, registro de pagos
+✅ Notas de crédito: listado, alta, anulación
+✅ Clientes: listado, alta, edición
+✅ Productos: listado, alta, edición
+📈 Reportes y Visualizaciones
+
+✅ Pantalla /reportes con filtros, gráficos avanzados y exportación
+🕵️ Auditoría
+
+✅ Pantalla /auditoria con eventos fiscales y filtros
+⚙️ Configuración
+
+✅ Pantalla /configuracion para datos de empresa y preferencias
+✨ Experiencia de Usuario
+
+✅ Breadcrumbs, BusyIndicator, manejo de errores, acciones rápidas, diálogos, responsive, accesibilidad
+🧪 Testing y Ajustes Finales
+
+✅ Pruebas unitarias, integración y E2E (Cypress)
+✅ Performance, optimización y documentación final
 
 
