@@ -2,10 +2,12 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import LoginPage from './pages/LoginPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
+import { ACCESS_MAP } from './accessMap.js';
 
 function Placeholder({ title }) {
   return <h2>{title}</h2>;
 }
+
 
 export const routesConfig = [
   { path: '/login', element: <LoginPage /> },
@@ -14,56 +16,14 @@ export const routesConfig = [
         <Placeholder title="Dashboard" />
       </ProtectedRoute>
     ) },
-  { path: '/dashboard', element: (
-      <ProtectedRoute>
-        <Placeholder title="Dashboard" />
+  ...ACCESS_MAP.map(({ path, label, allowedRoles }) => ({
+    path,
+    element: (
+      <ProtectedRoute allowedRoles={allowedRoles}>
+        <Placeholder title={label} />
       </ProtectedRoute>
-    ) },
-  { path: '/facturas', element: (
-      <ProtectedRoute>
-        <Placeholder title="Facturación" />
-      </ProtectedRoute>
-    ) },
-  { path: '/pedidos', element: (
-      <ProtectedRoute>
-        <Placeholder title="Pedidos" />
-      </ProtectedRoute>
-    ) },
-  { path: '/pagos', element: (
-      <ProtectedRoute>
-        <Placeholder title="Pagos" />
-      </ProtectedRoute>
-    ) },
-  { path: '/notas-credito', element: (
-      <ProtectedRoute>
-        <Placeholder title="Notas de crédito" />
-      </ProtectedRoute>
-    ) },
-  { path: '/clientes', element: (
-      <ProtectedRoute>
-        <Placeholder title="Clientes" />
-      </ProtectedRoute>
-    ) },
-  { path: '/productos', element: (
-      <ProtectedRoute>
-        <Placeholder title="Productos" />
-      </ProtectedRoute>
-    ) },
-  { path: '/reportes', element: (
-      <ProtectedRoute>
-        <Placeholder title="Reportes" />
-      </ProtectedRoute>
-    ) },
-  { path: '/auditoria', element: (
-      <ProtectedRoute>
-        <Placeholder title="Auditoría" />
-      </ProtectedRoute>
-    ) },
-  { path: '/configuracion', element: (
-      <ProtectedRoute>
-        <Placeholder title="Configuración" />
-      </ProtectedRoute>
-    ) },
+    )
+  })),
   { path: '*', element: <Placeholder title="No encontrado" /> },
 ];
 

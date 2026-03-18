@@ -102,6 +102,7 @@ Ambos tipos de tests son necesarios para asegurar calidad y robustez en la aplic
 ✅ Pantalla de login y lógica de autenticación
 ✅ Contexto de usuario y gestión de roles
 ✅ Protección de rutas y componentes
+🔐 Control de acceso por roles: protección de rutas y menú dinámico según permisos del backend
 📊 Dashboard
 
 ✅ Pantalla /dashboard con KPIs y primeros gráficos

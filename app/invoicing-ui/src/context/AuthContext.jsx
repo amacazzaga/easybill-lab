@@ -18,7 +18,11 @@ export function AuthProvider({ children }) {
     const storedRole = localStorage.getItem('role');
     if (storedUser && storedRole) {
       setUser(storedUser);
-      setRole(storedRole);
+      try {
+        setRole(JSON.parse(storedRole));
+      } catch {
+        setRole(storedRole);
+      }
     }
   }, []);
 
@@ -26,7 +30,7 @@ export function AuthProvider({ children }) {
     setUser(username);
     setRole(role);
     localStorage.setItem('user', username);
-    localStorage.setItem('role', role);
+    localStorage.setItem('role', JSON.stringify(role));
   };
 
   const logout = () => {
