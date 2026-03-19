@@ -11,12 +11,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  // Si ya hay sesión, redirigir a /dashboard
+  // Si ya hay sesión, redirigir a la ruta original (o /dashboard)
   useEffect(() => {
     if (user) {
-      navigate('/dashboard', { replace: true });
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,7 +44,7 @@ export default function LoginPage() {
       else if (username === 'contador') roles = ['contador'];
       else if (username === 'vendedor') roles = ['vendedor'];
       else roles = [];
-      login(username, roles);
+      login(username, roles, basicAuth);
       // Redirigir a la ruta original o a /dashboard
       const from = location.state?.from?.pathname || '/dashboard';
       navigate(from, { replace: true });

@@ -1,0 +1,2 @@
+ID,invoice_ID,fecha,importe,metodoPago,referencia,observaciones,createdAt,createdBy,modifiedAt,modifiedBy
+payment-1,invoice-1,2024-03-05,12100,Transferencia,TRX123,,2024-03-05T10:00:00Z,admin,2024-03-05T10:00:00Z,admin

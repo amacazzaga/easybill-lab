@@ -1,0 +1,2 @@
+ID,company_ID,client_ID,numero,fecha,estado,observaciones,subtotal,totalIVA,total,createdAt,createdBy,modifiedAt,modifiedBy
+order-1,company-1,client-1,0001,2024-03-01,Aprobada,,10000,2100,12100,2024-03-01T10:00:00Z,admin,2024-03-01T10:00:00Z,admin

@@ -1,0 +1,2 @@
+ID,creditNote_ID,product_ID,descripcion,cantidad,precioUnitario,alicuotaIVA,subtotal,importeIVA,total
+credititem-1,credit-1,product-1,Producto A,1,1000,21,1000,210,1210

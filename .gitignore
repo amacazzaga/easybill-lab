@@ -8,6 +8,7 @@ default-*.json
 gen/
 node_modules/
 target/
+app/invoicing-ui/dist/
 
 # Variables de entorno — credenciales SMTP y secrets
 .env

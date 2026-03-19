@@ -11,9 +11,13 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(role)) {
+  if (allowedRoles) {
     // Autenticado pero sin rol suficiente
-    return <Navigate to="/dashboard" replace />;
+    const userRoles = Array.isArray(role) ? role : role ? [role] : [];
+    const hasAccess = allowedRoles.some(r => userRoles.includes(r));
+    if (!hasAccess) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return children;

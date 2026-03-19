@@ -1,0 +1,2 @@
+ID,order_ID,product_ID,descripcion,cantidad,precioUnitario,alicuotaIVA,subtotal,importeIVA,total
+item-1,order-1,product-1,Producto A,10,1000,21,10000,2100,12100

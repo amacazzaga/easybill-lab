@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import LoginPage from './pages/LoginPage.jsx';
+import DashboardPage from './pages/DashboardPage.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import { ACCESS_MAP } from './accessMap.js';
 
@@ -13,14 +14,14 @@ export const routesConfig = [
   { path: '/login', element: <LoginPage /> },
   { path: '/', element: (
       <ProtectedRoute>
-        <Placeholder title="Dashboard" />
+        <DashboardPage />
       </ProtectedRoute>
     ) },
   ...ACCESS_MAP.map(({ path, label, allowedRoles }) => ({
     path,
     element: (
       <ProtectedRoute allowedRoles={allowedRoles}>
-        <Placeholder title={label} />
+        {path === '/dashboard' ? <DashboardPage /> : <Placeholder title={label} />}
       </ProtectedRoute>
     )
   })),

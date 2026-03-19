@@ -1,0 +1,2 @@
+ID,company_ID,client_ID,order_ID,tipoComprobante,puntoVenta,numeroComprobante,numero,fecha,fechaVencimiento,estado,cae,caeFechaVto,subtotal,totalIVA,total,observaciones,createdAt,createdBy,modifiedAt,modifiedBy
+invoice-1,company-1,client-1,order-1,A,0001,00000001,0001-00000001,2024-03-02,2024-03-15,Emitida,123456,2024-03-15,10000,2100,12100,,2024-03-02T10:00:00Z,admin,2024-03-02T10:00:00Z,admin
